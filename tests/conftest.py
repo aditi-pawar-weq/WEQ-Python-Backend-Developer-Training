@@ -14,8 +14,6 @@ async def async_client():
         yield client
 
 
-import pytest
-from app.main import app
 from app.db.database import get_db
 from app.db.test_database import get_test_db, engine_test, Base
 

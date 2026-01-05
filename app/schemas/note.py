@@ -1,17 +1,15 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 
-
-class NoteCreate(BaseModel):
-    title: str = Field(..., min_length=1)
-    content: str = Field(..., min_length=1)
-
-
-class NoteResponse(BaseModel):
-    id: int
+class NoteBase(BaseModel):
     title: str
     content: str
+
+class NoteCreate(NoteBase):
+    pass
+
+class NoteResponse(NoteBase):
+    id: int
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
