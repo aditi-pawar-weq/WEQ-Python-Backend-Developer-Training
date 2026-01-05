@@ -25,5 +25,16 @@ from app.routers import health, service
 app.include_router(health.router)
 app.include_router(service.router)
 
+from app.db.database import engine, Base
+from app.routers import note
+
+@app.on_event("startup")
+async def startup():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+app.include_router(note.router)
+
+
 
 
