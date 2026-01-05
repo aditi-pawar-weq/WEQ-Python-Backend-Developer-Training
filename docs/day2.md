@@ -8,7 +8,7 @@ On Day 2, I worked on building and testing APIs using FastAPI. This day focused 
 
 ## What I Did
 
-### APIs Created
+### APIs Created 
 
 I built the following APIs:
 
