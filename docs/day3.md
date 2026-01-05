@@ -24,6 +24,63 @@ Implemented REST APIs for managing notes:
 
 ---
 
+### Authentication (JWT)
+
+After the Day 3 work we also added a simple JSON Web Token (JWT) based
+authentication flow to support protected endpoints and demo user accounts.
+
+- Endpoints:
+  - `POST /auth/register` — register a new user (body: username, password)
+  - `POST /auth/token` — exchange credentials for an access token
+- Tokens are standard JWTs created with the secret configured via `JWT_SECRET`
+  in the environment (see `app/config/settings.py`).
+- Protected endpoints accept an HTTP Bearer token and are implemented using
+  FastAPI's `HTTPBearer` dependency so the Swagger UI shows an "Authorize"
+  control where you can paste `Bearer <token>` and try protected routes.
+
+Files to review for auth:
+- `app/models/user.py` — User model
+- `app/repositories/user_repository.py` — persistence helpers
+- `app/services/user_service.py` — registration & authentication (password hashing)
+- `app/services/auth_service.py` — token creation & validation
+- `app/routers/auth.py` — register & token endpoints
+
+### Authentication — implemented features (summary)
+
+We extended the demo auth skeleton into a small, production-minded flow (safe for learning / demos):
+
+- Registration (`POST /auth/register`)
+  - Accepts `email`, `name`, `password` (Pydantic request model).
+  - Password validator enforces min length and requires at least one uppercase letter and one digit.
+  - Returns an access token on successful registration together with user info (id, email, name).
+
+- Login / Token (`POST /auth/token`)
+  - Accepts identifier (email or username) and password.
+  - Issues a JWT access token on successful authentication.
+  - Rate-limited (demo in-memory limiter): 5 failed attempts per minute per IP, returns 429 after limit.
+
+- Logout (`POST /auth/logout`)
+  - Protected endpoint that blacklists the current token (DB-backed `revoked_tokens` table).
+  - Returns 204 No Content on success; blacklisted tokens are rejected by protected routes.
+
+- Protected endpoints
+  - `GET /protected` demonstrates use of the `get_current_user` dependency which validates tokens and checks the blacklist.
+  - FastAPI's HTTP Bearer integration exposes the Swagger "Authorize" button so you can paste `Bearer <token>` and try protected routes.
+
+What changed in code
+- `app/models/user.py` — added `email` and `name` fields and `RevokedToken` model (DB table `revoked_tokens`).
+- `app/repositories/token_repository.py` — manages revoked tokens.
+- `app/services/user_service.py` — registration now accepts email/name and hashes passwords.
+- `app/services/auth_service.py` — token creation/validation and blacklist checks in `get_current_user`.
+- `app/routers/auth.py` — `POST /auth/register`, `POST /auth/token` (rate-limited), and `POST /auth/logout` implemented.
+
+Notes & next steps
+- Password hashing currently uses `passlib`'s `sha256_crypt` for demo stability. For production, switch to `bcrypt` (12 rounds) and ensure the native `bcrypt` wheel is available.
+- JWT claim hardening (aud, iss, kid) and default expiry change (30 minutes) are planned next steps.
+- Token blacklist is DB-backed for persistence; for high-scale deployments consider storing token identifiers (jti) with TTL in Redis.
+
+
+
 ### 2. Clean Architecture
 
 Followed proper separation of concerns:
@@ -123,6 +180,10 @@ uvicorn app.main:app --reload
 
 The API will be available at: `http://127.0.0.1:8000`
 
+Note: the application uses a FastAPI async lifespan context manager to
+perform startup tasks (for example creating DB tables) instead of the
+older `@app.on_event("startup")` decorator.
+
 ### Run Tests
 
 ```bash
@@ -140,6 +201,9 @@ pytest --cov=app --cov-report=html
 Open your browser and go to:
 - Swagger UI: `http://127.0.0.1:8000/docs`
 - ReDoc: `http://127.0.0.1:8000/redoc`
+
+Tip: use the "Authorize" button in the Swagger UI to paste a Bearer token
+(`Bearer <token>`) and try protected endpoints.
 
 ---
 

@@ -1,5 +1,6 @@
 fastapi
 uvicorn
+bcrypt>=4.0.1
 pydantic-settings
 python-dotenv
 pytest
@@ -7,3 +8,5 @@ pytest-asyncio
 pytest-cov
 httpx
 requests
+PyJWT
+passlib[bcrypt]

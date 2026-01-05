@@ -26,6 +26,32 @@ I built the following APIs:
 - **Create Note**: Add new notes to the system
 - **List Notes**: Retrieve all notes
 
+### Authentication (JWT)
+
+After the initial Day 2 work we added a simple JSON Web Token (JWT) based
+authentication flow to the project to support protected endpoints and demo
+user accounts. Key points:
+
+- Endpoints:
+  - `POST /auth/register` — register a new user (body: username, password)
+  - `POST /auth/token` — exchange credentials for an access token
+- Tokens are standard JWTs created with the secret configured via `JWT_SECRET`
+  in the environment (see `app/config/settings.py`).
+- For demo purposes passwords are hashed (passlib). In the provided
+  development environment we use `sha256_crypt` for compatibility; production
+  should use `bcrypt` and a properly installed `bcrypt` native library.
+- Protected endpoints accept an HTTP Bearer token and are implemented using
+  FastAPI's `HTTPBearer` dependency; Swagger UI shows an "Authorize" button
+  where you can paste `Bearer <token>`.
+
+Files to review:
+- `app/models/user.py` — User model
+- `app/repositories/user_repository.py` — persistence helpers
+- `app/services/user_service.py` — registration & authentication (password hashing)
+- `app/services/auth_service.py` — token creation & validation
+- `app/routers/auth.py` — register & token endpoints
+
+
 ---
 
 ## Architecture
